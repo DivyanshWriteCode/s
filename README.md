@@ -1,29 +1,15 @@
-Perfect! We’ll proceed with deployment using your server’s IP address (no custom domain).
+# 🚀 Deployment Brief: Node.js + React App with Nginx & PM2
 
-Let’s assume:
-- Your server’s public IP is: `YOUR_SERVER_IP` (replace this with your actual IP)
-- Backend will run on port `5000`
-- Frontend will be served by Nginx on port `80` (HTTP)
-
----
-
-## 1. Install Dependencies
-
-**If you haven’t already, run these commands on your server:**
-
+## 1. **Install Dependencies**
 ```sh
-# Update and install Node.js, npm, and Nginx
 sudo apt update
 sudo apt install -y nodejs npm nginx
-
-# Install PM2 globally
 sudo npm install -g pm2
 ```
 
 ---
 
-## 2. Install Project Dependencies
-
+## 2. **Install Project Dependencies**
 ```sh
 # Backend
 cd /path/to/Final_Product/server
@@ -36,8 +22,47 @@ npm install
 
 ---
 
-## 3. Build the Frontend
+## 3. **Environment Variables**
 
+### **Backend (`server/.env`):**
+```
+PORT=3002
+HOST=0.0.0.0
+# Add other backend env variables as needed
+```
+
+### **Frontend (`frontend/.env`):**
+```
+REACT_APP_API_URL=/api
+# Add other frontend env variables as needed
+```
+> **After editing frontend `.env`, rebuild the frontend:**
+> ```sh
+> npm run build
+> ```
+
+---
+
+## 4. **Check/Update Backend Listen Address**
+In `server/index.js`:
+```js
+app.listen(3002, '0.0.0.0', () => {
+  console.log('Server running on port 3002');
+});
+```
+
+---
+
+## 5. **Check/Update Frontend API URLs**
+- Ensure all API calls use relative paths: `/api/...`
+- Example:
+  ```js
+  fetch(`${process.env.REACT_APP_API_URL}/something`)
+  ```
+
+---
+
+## 6. **Build the Frontend**
 ```sh
 cd /path/to/Final_Product/frontend
 npm run build
@@ -45,8 +70,7 @@ npm run build
 
 ---
 
-## 4. Start Backend with PM2
-
+## 7. **Start Backend with PM2**
 ```sh
 cd /path/to/Final_Product/server
 pm2 start index.js --name final-product-backend
@@ -55,16 +79,8 @@ pm2 save
 
 ---
 
-## 5. Configure Nginx
-
-**Edit the Nginx config:**
-
-```sh
-sudo nano /etc/nginx/sites-available/final_product
-```
-
-Paste this config (replace `YOUR_SERVER_IP` if needed):
-
+## 8. **Configure Nginx**
+Create `/etc/nginx/sites-available/final_product`:
 ```nginx
 server {
     listen 80;
@@ -78,7 +94,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://localhost:5000/;
+        proxy_pass http://localhost:3002/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -86,9 +102,7 @@ server {
     }
 }
 ```
-
-**Enable the config:**
-
+Enable and reload:
 ```sh
 sudo ln -s /etc/nginx/sites-available/final_product /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -97,13 +111,29 @@ sudo systemctl reload nginx
 
 ---
 
-## 6. Test
-
+## 9. **Test**
 - Visit `http://YOUR_SERVER_IP` in your browser.
 - The frontend should load.
-- API requests (e.g., `/api/...`) should be proxied to your backend.
+- API requests should work.
 
 ---
 
-**Let me know if you want to proceed with these steps, or if you want me to generate any config files or scripts for you!**  
-If you have your actual server IP, please provide it so I can fill it in for you.
+## 10. **(Optional) PM2 Startup on Boot**
+```sh
+pm2 startup
+# Follow the instructions, then:
+pm2 save
+```
+
+---
+
+**Summary:**  
+- All API calls use `/api` (relative path).
+- Backend listens on `0.0.0.0:3002`.
+- Nginx serves the frontend and proxies `/api` to backend.
+- PM2 manages backend process.
+- Environment variables are set in `.env` files.
+
+---
+
+Let me know if you want a ready-to-copy Nginx config, `.env` templates, or help with any specific step!
